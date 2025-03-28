@@ -1,0 +1,151 @@
+= Demo for Migrating Confluent Platform from Zookeeper to KRaft
+
+This playground for experimenting with migrating Kafka from Zookeeper to KRaft.
+It features an optional ELK (Elastic, Kibana, fleet agent) stack for easier observability.
+
+This version of the playground is for Confluent Platform (commercial). The guide for migrating Confluent Platform installations from Zookeeper to KRaft can be found link:https://docs.confluent.io/platform/current/installation/migrate-zk-kraft.html#[here].
+
+DISCLAIMER: This project is for demonstration purposes only. Using the demo unmodified in production is highly discouraged. Use at your own risk.
+
+== Preconditions
+
+Adapt the testbench to your version of Confluent Platform as required by modifying `.env`.
+
+== Running Confluent Platform
+
+=== Initial setup
+
+Start with three KRaft controllers and two brokers. Optionally for large machines or VMs, enable control-center:
+
+```bash
+export COMPOSE_PROFILES="controlcenter"
+```
+
+Then start the cluster by running
+
+```bash
+docker compose up -d
+```
+
+The cluster should spin up. You should be able to list the existing topics:
+
+```shell
+docker compose exec broker1 kafka-topics --bootstrap-server broker1:9092 --list
+```
+
+Let's check the status of the KRaft quroum:
+
+```shell
+docker compose exec broker1 kafka-metadata-quorum --bootstrap-server broker1:9092 describe --status
+```
+
+
+=== Controller Migration
+
+```bash
+export COMPOSE_PROFILES="controllerMigration"
+```
+
+Start one addition KRaft controller:
+
+```shell
+docker compose up -d
+```
+
+We have now three controllers: controller1 (ID: 101), controller1 (ID: 102), controller1 (ID: 103) and the new controller4 (ID: 104).
+
+If you check the logs for controller4 you can see that it works normally, but does not know anything about controller3 because we haven't configured that one in the controller4's config.
+
+```shell
+docker compose logs controller4 -f
+```
+
+Let's check the cluster status again:
+
+```shell
+docker compose exec broker1 kafka-metadata-quorum --bootstrap-server broker1:9092 describe --status
+```
+
+We can see controller4 listed as an observer. It will never become the leader in the election process because the other nodes have not been configured to accept it.
+
+```shell
+docker compose exec broker1 kafka-metadata-quorum --bootstrap-server broker1:9092 add-controller
+```
+
+Let's try to change this and make controller4 part of the quorum:
+
+```shell
+docker compose exec controller4 kafka-metadata-quorum --bootstrap-server broker1:9092 --command-config /etc/kafka/kafka.properties add-controller
+```
+
+Unfortunately, this will (at least at the time of writing this document) fail with an error message: "Cluster doesn't support adding voter because the kraft.version feature is 0".
+We need to update the KRaft protocol version first. TODO:
+
+```shell
+docker compose exec controller1 kafka-features --bootstrap-server broker1:9092 upgrade --feature kraft.version=1
+```
+
+Let's try the command from above again:
+
+```shell
+docker compose exec controller4 kafka-metadata-quorum --bootstrap-server broker1:9092 --command-config /etc/kafka/kafka.properties add-controller
+```
+
+== (Optionally) Testing the cluster
+
+==== Create topic and produce some data
+
+Create a topic:
+
+```
+docker compose exec broker1 kafka-topics --bootstrap-server broker1:9092 --create --topic test
+```
+
+List topics:
+
+```
+docker compose exec broker1 kafka-topics --bootstrap-server broker1:9092 --list
+```
+
+Produce some test data (exit with Ctrl-D):
+
+```
+docker compose exec broker1 kafka-console-producer --bootstrap-server broker1:9092 --topic test
+```
+
+Read the data again (exit with Ctrl-C):
+
+```
+docker compose exec broker1 kafka-console-consumer --bootstrap-server broker1:9092 --topic test --from-beginning
+```
+
+## Cleaning up
+
+Stopping all the  containers with removal of all created volumes (be careful!):
+
+```bash
+COMPOSE_PROFILES="controlcenter,controllerMigration" docker compose  down -v
+unset COMPOSE_PROFILES
+```
+
+## Useful commands
+
+Stopping all the containers without removing any volumes:
+```bash
+COMPOSE_PROFILES="controlcenter,controllerMigration" docker compose  down
+```
+
+Stopping all the  containers with removal of all created volumes (be careful!):
+```bash
+COMPOSE_PROFILES="controlcenter,controllerMigration" docker compose  down -v
+```
+
+Cleaning up (CAREFUL: THIS WILL DELETE ALL UNUSED VOLUMES):
+```bash
+docker volumes prune
+```
+
+Reset the `compose.yaml` to the initial state currenty commited to the repository:
+```bash
+git checkout compose.yaml
+```
