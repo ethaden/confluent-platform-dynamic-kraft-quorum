@@ -6,19 +6,31 @@ services:
     container_name: controller1
     volumes:
       - data-controller1:/var/lib/kafka/data
+      # A little hack which allows us initializing a dynamic quorum
+      - ./kraft/controller/ensure:/etc/confluent/docker/ensure
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "controller1", "9093" ]
     environment:
       # Common
       KAFKA_PROCESS_ROLES: controller
       KAFKA_LISTENERS: CONTROLLER://controller1:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_NODE_ID: 101
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 101@controller1:9093,102@controller2:9093,103@controller3:9093
+      # For static quorum
+      #KAFKA_CONTROLLER_QUORUM_VOTERS: 101@controller1:9093,102@controller2:9093,103@controller3:9093
+      # For dynamic quorum
+      KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: controller1:9093,controller2:9093,controller3:9093
+      KAFKA_CONTROLLER_QUORUM_AUTO_JOIN_ENABLE: true
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       CLUSTER_ID: ${KRAFT_CLUSTER_ID}
       KAFKA_KRAFT_REPLICATION_FACTOR: 3
       KAFKA_CONFLUENT_CLUSTER_LINK_METADATA_TOPIC_ENABLE: true
       KAFKA_CONFLUENT_BALANCER_ENABLE: false
+      CONTROLLER_1_UUID: ${CONTROLLER_1_UUID}
+      CONTROLLER_2_UUID: ${CONTROLLER_2_UUID}
+      CONTROLLER_3_UUID: ${CONTROLLER_3_UUID}
+
 
   controller2:
     image: confluentinc/cp-server:${CP_VERSION}
@@ -26,19 +38,33 @@ services:
     container_name: controller2
     volumes:
       - data-controller2:/var/lib/kafka/data
+      - ./kraft/controller/ensure:/etc/confluent/docker/ensure
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "controller2", "9093" ]
+#    depends_on:
+#      controller1:
+#        condition: service_healthy
     environment:
       # Common
       KAFKA_PROCESS_ROLES: controller
       KAFKA_LISTENERS: CONTROLLER://controller2:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_NODE_ID: 102
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 101@controller1:9093,102@controller2:9093,103@controller3:9093
+      # For static quorum
+      #KAFKA_CONTROLLER_QUORUM_VOTERS: 101@controller1:9093,102@controller2:9093,103@controller3:9093
+      # For dynamic quorum
+      KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: controller1:9093,controller2:9093,controller3:9093
+      KAFKA_CONTROLLER_QUORUM_AUTO_JOIN_ENABLE: true
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       CLUSTER_ID: ${KRAFT_CLUSTER_ID}
       KAFKA_KRAFT_REPLICATION_FACTOR: 3
       KAFKA_CONFLUENT_CLUSTER_LINK_METADATA_TOPIC_ENABLE: true
       KAFKA_CONFLUENT_BALANCER_ENABLE: false
+      CONTROLLER_1_UUID: ${CONTROLLER_1_UUID}
+      CONTROLLER_2_UUID: ${CONTROLLER_2_UUID}
+      CONTROLLER_3_UUID: ${CONTROLLER_3_UUID}
+
 
   controller3:
     image: confluentinc/cp-server:${CP_VERSION}
@@ -46,19 +72,32 @@ services:
     container_name: controller3
     volumes:
       - data-controller3:/var/lib/kafka/data
+      - ./kraft/controller/ensure:/etc/confluent/docker/ensure
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "controller3", "9093" ]
+#    depends_on:
+#      controller1:
+#        condition: service_healthy
     environment:
       # Common
       KAFKA_PROCESS_ROLES: controller
       KAFKA_LISTENERS: CONTROLLER://controller3:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_NODE_ID: 103
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 101@controller1:9093,102@controller2:9093,103@controller3:9093
+      # For static quorum
+      #KAFKA_CONTROLLER_QUORUM_VOTERS: 101@controller1:9093,102@controller2:9093,103@controller3:9093
+      # For dynamic quorum
+      KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: controller1:9093,controller2:9093,controller3:9093
+      KAFKA_CONTROLLER_QUORUM_AUTO_JOIN_ENABLE: true
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       CLUSTER_ID: ${KRAFT_CLUSTER_ID}
       KAFKA_KRAFT_REPLICATION_FACTOR: 3
       KAFKA_CONFLUENT_CLUSTER_LINK_METADATA_TOPIC_ENABLE: true
       KAFKA_CONFLUENT_BALANCER_ENABLE: false
+      CONTROLLER_1_UUID: ${CONTROLLER_1_UUID}
+      CONTROLLER_2_UUID: ${CONTROLLER_2_UUID}
+      CONTROLLER_3_UUID: ${CONTROLLER_3_UUID}
 
   controller4:
     image: confluentinc/cp-server:${CP_VERSION}
@@ -66,21 +105,34 @@ services:
     container_name: controller4
     volumes:
       - data-controller4:/var/lib/kafka/data
+      - ./kraft/controller/ensure:/etc/confluent/docker/ensure
     profiles:
       - controllerMigration
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "controller4", "9093" ]
+    depends_on:
+      controller1:
+        condition: service_healthy
     environment:
       # Common
       KAFKA_PROCESS_ROLES: controller
       KAFKA_LISTENERS: CONTROLLER://controller4:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_NODE_ID: 104
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 101@controller1:9093,102@controller2:9093,104@controller4:9093
+      # For static quorum
+      #KAFKA_CONTROLLER_QUORUM_VOTERS: 101@controller1:9093,102@controller2:9093,103@controller3:9093
+      # For dynamic quorum
+      KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: controller1:9093,controller2:9093,controller3:9093
+      KAFKA_CONTROLLER_QUORUM_AUTO_JOIN_ENABLE: true
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       CLUSTER_ID: ${KRAFT_CLUSTER_ID}
       KAFKA_KRAFT_REPLICATION_FACTOR: 3
       KAFKA_CONFLUENT_CLUSTER_LINK_METADATA_TOPIC_ENABLE: true
       KAFKA_CONFLUENT_BALANCER_ENABLE: false
+      CONTROLLER_1_UUID: ${CONTROLLER_1_UUID}
+      CONTROLLER_2_UUID: ${CONTROLLER_2_UUID}
+      CONTROLLER_3_UUID: ${CONTROLLER_3_UUID}
 
   broker1:
     image: confluentinc/cp-server:${CP_VERSION}
@@ -92,6 +144,9 @@ services:
       - data-broker1:/var/lib/kafka/data
     healthcheck:
       test: [ "CMD", "nc", "-z", "broker1", "9092" ]
+    depends_on:
+      controller1:
+        condition: service_healthy
     environment:
       KAFKA_LISTENERS: 'PLAINTEXT://broker1:9092,PLAINTEXT_HOST://0.0.0.0:29092'
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker1:9092,PLAINTEXT_HOST://localhost:9092
@@ -107,7 +162,8 @@ services:
       CONFLUENT_METRICS_ENABLE: true
       CONFLUENT_LINK_COORDINATOR_ENABLE: true
       KAFKA_CONFLUENT_CLUSTER_LINK_METADATA_TOPIC_ENABLE: true
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 101@controller1:9093,102@controller2:9093,103@controller3:9093
+      KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: controller1:9093,controller2:9093,controller3:9093
+      #KAFKA_CONTROLLER_QUORUM_VOTERS: 101@controller1:9093,102@controller2:9093,103@controller3:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker
@@ -132,9 +188,11 @@ services:
       - "19093:29093"
     volumes:
       - data-broker2:/var/lib/kafka/data
-      - ./kraft:/tmp/kraft
     healthcheck:
       test: [ "CMD", "nc", "-z", "broker2", "9092" ]
+    depends_on:
+      controller1:
+        condition: service_healthy
     environment:
       KAFKA_LISTENERS: 'PLAINTEXT://broker2:9092,PLAINTEXT_HOST://0.0.0.0:29092'
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker2:9092,PLAINTEXT_HOST://localhost:9092
@@ -149,7 +207,8 @@ services:
       CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
       CONFLUENT_METRICS_ENABLE: true
       KAFKA_CONFLUENT_CLUSTER_LINK_METADATA_TOPIC_ENABLE: true
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 101@controller1:9093,102@controller2:9093,103@controller3:9093
+      KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: controller1:9093,controller2:9093,controller3:9093
+      #KAFKA_CONTROLLER_QUORUM_VOTERS: 101@controller1:9093,102@controller2:9093,103@controller3:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_NODE_ID: 2
       KAFKA_PROCESS_ROLES: broker
@@ -171,10 +230,14 @@ services:
     hostname: schema-registry
     container_name: schema-registry
     depends_on:
-      - broker1
-      - broker2
+      broker1:
+        condition: service_healthy
+      broker2:
+        condition: service_healthy
     ports:
       - '8081:8081'
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "schema-registry", "8081" ]
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker1:9092,broker2:9092'
@@ -189,9 +252,12 @@ services:
     profiles:
       - controlcenter
     depends_on:
-      - broker1
-      - broker2
-      - schema-registry
+      broker1:
+        condition: service_healthy
+      broker2:
+        condition: service_healthy
+      schema-registry: 
+        condition: service_healthy
     ports:
       - "9021:9021"
     environment:
