@@ -17,13 +17,13 @@ Adapt the testbench to your version of Confluent Platform as required by modifyi
 
 Start with three KRaft controllers and two brokers. Optionally for large machines or VMs, enable control-center:
 
-```bash
+```shell
 export COMPOSE_PROFILES="controlcenter"
 ```
 
 Then start the cluster by running
 
-```bash
+```shell
 docker compose up -d
 ```
 
@@ -42,7 +42,15 @@ docker compose exec broker1 kafka-metadata-quorum --bootstrap-server broker1:909
 
 === Controller Migration
 
-```bash
+First, let's check that the kafka Kraft version is at least `1` as required for dynamic quorum:
+
+```shell
+docker compose exec controller1 kafka-features --bootstrap-controller controller1:9093 describe | grep kraft.version
+```
+
+The `FinalizedVersionLevel` might be reported as `1` due to a an open issue. Thus, the output of this describe command is  not a suitable indicator for an enabled dynamic quorum. Let's try to add another controller dynamically.
+
+```shell
 export COMPOSE_PROFILES="controllerMigration"
 ```
 
@@ -66,16 +74,26 @@ Let's check the cluster status again:
 docker compose exec broker1 kafka-metadata-quorum --bootstrap-server broker1:9092 describe --status
 ```
 
-We can see controller4 listed as an observer. It will never become the leader in the election process because the other nodes have not been configured to accept it.
+We can see controller4 listed as an observer. Check the replication status by running:
 
 ```shell
-docker compose exec broker1 kafka-metadata-quorum --bootstrap-server broker1:9092 add-controller
+docker compose exec broker1 kafka-metadata-quorum --bootstrap-server broker1:9092 describe --replication
 ```
 
-Let's try to change this and make controller4 part of the quorum:
+This will show that nodes `101`, `102` and `103` are active members of the quorum. Node `104` is an observer and the two brokers `1` and `2` are also observers.
+
+Node `104` will never become the leader in the election process because the other nodes have not been configured to accept it. Let's change that.
 
 ```shell
 docker compose exec controller4 kafka-metadata-quorum --bootstrap-server broker1:9092 --command-config /etc/kafka/kafka.properties add-controller
+```
+
+Due to the way we configured the cluster (we started with a dynamic quorum), this will be successful.
+
+Check the list of nodes again:
+
+```shell
+docker compose exec broker1 kafka-metadata-quorum --bootstrap-server broker1:9092 describe --replication
 ```
 
 Unfortunately, this will (at least at the time of writing this document) fail with an error message: "Cluster doesn't support adding voter because the kraft.version feature is 0".
@@ -123,7 +141,7 @@ docker compose exec broker1 kafka-console-consumer --bootstrap-server broker1:90
 
 Stopping all the  containers with removal of all created volumes (be careful!):
 
-```bash
+```shell
 COMPOSE_PROFILES="controlcenter,controllerMigration" docker compose  down -v
 unset COMPOSE_PROFILES
 ```
@@ -131,21 +149,21 @@ unset COMPOSE_PROFILES
 ## Useful commands
 
 Stopping all the containers without removing any volumes:
-```bash
+```shell
 COMPOSE_PROFILES="controlcenter,controllerMigration" docker compose  down
 ```
 
 Stopping all the  containers with removal of all created volumes (be careful!):
-```bash
+```shell
 COMPOSE_PROFILES="controlcenter,controllerMigration" docker compose  down -v
 ```
 
 Cleaning up (CAREFUL: THIS WILL DELETE ALL UNUSED VOLUMES):
-```bash
+```shell
 docker volumes prune
 ```
 
 Reset the `compose.yaml` to the initial state currenty commited to the repository:
-```bash
+```shell
 git checkout compose.yaml
 ```

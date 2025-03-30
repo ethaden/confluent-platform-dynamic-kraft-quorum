@@ -1,1 +1,1 @@
-COMPOSE_PROFILES=controlcenter,migrateController docker compose down -v
+COMPOSE_PROFILES=controlcenter,controllerMigration docker compose down -v
