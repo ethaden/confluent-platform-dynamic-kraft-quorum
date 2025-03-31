@@ -69,6 +69,7 @@ Use the string found in the `id` field of the result.
 
 Now prepare the Docker environment for spinning up the new KRaft controllers with that ID.
 In the `.env` file found in the folder of the `compose.yaml`, set the "KRAFT_CLUSTER_ID" variable to the valued of the `id` field.
+Important: Do NOT enable the migration mode in the brokers yet. We need a KRaft controller quorum first. Follow the next steps one-by-one.
 
 Next, let's choose a docker profile where both Zookeeper and KRaft controllers are active:
 
