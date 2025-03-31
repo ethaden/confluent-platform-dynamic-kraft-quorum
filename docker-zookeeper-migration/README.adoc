@@ -129,11 +129,28 @@ export COMPOSE_PROFILES="kraft"
 docker compose up -d
 ```
 
+### Adding another controller dynamically
+
+You might have noticed a fourth controller with hostname `controller4`. This controller is not configured to be part of the boostrap servers.
+It will join the quorum as an observer.
+
+Due to the dynamic quorum feature, we can make this controller a full member of the quorum:
+
+```shell
+docker compose exec controller4 kafka-metadata-quorum --bootstrap-controller controller1:9093 --command-config /etc/kafka/kafka.properties add-controller
+```
+
+Check the status again:
+
+```shell
+docker compose exec controller1 kafka-metadata-quorum --bootstrap-controller controller1:9093 describe --replication
+```
+
 ### Cleaning up
 
 Stopping all the  containers with removal of all created volumes (be careful!):
 ```bash
-COMPOSE_PROFILES="zookeeper,migration,kraft,elastic" docker compose  down -v
+COMPOSE_PROFILES="zookeeper,migration,kraft" docker compose  down -v
 unset COMPOSE_PROFILES
 ```
 
@@ -145,12 +162,12 @@ docker compose exec zookeeper1 zookeeper-shell localhost:21811 ls /brokers/ids
 
 Stopping all the containers without removing any volumes:
 ```bash
-COMPOSE_PROFILES="zookeeper,migration,kraft,elastic" docker compose  down
+COMPOSE_PROFILES="zookeeper,migration,kraft" docker compose  down
 ```
 
 Stopping all the  containers with removal of all created volumes (be careful!):
 ```bash
-COMPOSE_PROFILES="zookeeper,migration,kraft,elastic" docker compose  down -v
+COMPOSE_PROFILES="zookeeper,migration,kraft" docker compose  down -v
 ```
 
 Cleaning up (CAREFUL: THIS WILL DELETE ALL UNUSED VOLUMES):
