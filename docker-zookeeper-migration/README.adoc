@@ -1,0 +1,163 @@
+= Demo for Migrating Confluent Platform from Zookeeper to KRaft
+
+This playground for experimenting with migrating Kafka from Zookeeper to KRaft.
+It features an optional ELK (Elastic, Kibana, fleet agent) stack for easier observability.
+
+This version of the playground is for Confluent Platform (commercial). The guide for migrating Confluent Platform installations from Zookeeper to KRaft can be found link:https://docs.confluent.io/platform/current/installation/migrate-zk-kraft.html#[here].
+
+DISCLAIMER: This project is for demonstration purposes only. Using the demo unmodified in production is highly discouraged. Use at your own risk.
+
+== Preconditions
+
+Adapt the testbench to your version of Confluent Platform as required by modifying `.env`.
+
+== Running Confluent Platform
+
+=== Phase 1: Start a new cluster in Zookeeper mode
+
+First, activate the docker profile zookeeper for the following commands, by setting the appropriate environment variable:
+
+```bash
+export COMPOSE_PROFILES="zookeeper"
+```
+
+Start the containers by running:
+```bash
+docker compose up -d
+```
+
+Wait until all container have initialized. You can check them with this command (Look at the STATUS column)
+```bash
+docker compose ps
+```
+
+==== Create topic and produce some data
+
+Create a topic:
+
+```
+docker compose exec broker1 kafka-topics --bootstrap-server broker1:9092 --create --topic test
+```
+
+List topics:
+
+```
+docker compose exec broker1 kafka-topics --bootstrap-server broker1:9092 --list
+```
+
+Produce some test data (exit with Ctrl-D):
+
+```
+docker compose exec broker1 kafka-console-producer --bootstrap-server broker1:9092 --topic test
+```
+
+Read the data again (exit with Ctrl-C):
+
+```
+docker compose exec broker1 kafka-console-consumer --bootstrap-server broker1:9092 --topic test --from-beginning
+```
+
+=== Phase 2: Start the migration
+
+First, we need to find the `Cluster ID` of the Zookeeper-based Kafka cluster. This can be found in Zookeeper by running
+
+```bash
+docker compose exec zookeeper1 zookeeper-shell localhost:21811 get /cluster/id
+```
+
+Use the string found in the `id` field of the result.
+
+Now prepare the Docker environment for spinning up the new KRaft controllers with that ID.
+In the `.env` file found in the folder of the `compose.yaml`, set the "KRAFT_CLUSTER_ID" variable to the valued of the `id` field.
+
+Next, let's choose a docker profile where both Zookeeper and KRaft controllers are active:
+
+```bash
+export COMPOSE_PROFILES="migration"
+docker compose up -d
+```
+
+Have a look at the log files of the KRaft controllers (One of `controller1`, `controller2`, or `controller3` will become the quorum controller, check all):
+
+```bash
+docker compose logs controller1
+docker compose logs controller2
+docker compose logs controller3
+```
+
+The controllers will initialize and wait for connections from brokers before they start the actual migration.
+
+Update the brokers configuration in the `compose.yaml` Docker configuration file.
+Make sure, `CONTROLLER:PLAINTEXT` is configured in the listener security map (`KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP`), for every broker. In this demo this has been pre-configured already.
+
+Then, uncomment all environment variables required by the Zookeeper-to-KRaft migration (we call this Phase 2 in this demo).
+Restart the brokers after that:
+
+```bash
+docker compose up -d
+```
+
+The migration should now start. Check the KRaft controller logs for details. Wait until you see a message "Completed migration of metadata from Zookeeper to KRaft". Then enter Phase 3 of this demo.
+```bash
+docker compose logs controller1 controller2 controller3|grep "Completed migration"
+```
+
+### Phase 3: KRaft-only mode
+
+Reconfigure the brokers and the controllers and remove all lines only relevant during Phase 1 and Phase 2 (please read the `compose.yaml` carefully as some configuration options need to remain enabled in KRaft-only mode).
+
+Restart the brokers and the controllers:
+```bash
+docker compose up -d
+```
+
+Check theirs logs:
+```bash
+docker compose logs broker1
+docker compose logs broker2
+```
+
+The Zookeeper nodes should not be required anymore. Shut them down by running:
+```bash
+docker compose down -v zookeeper1 zookeeper2 zookeeper3
+```
+
+Optionally, you can now update your docker profiles environment variable to use KRaft mode only:
+```bash
+export COMPOSE_PROFILES="kraft"
+docker compose up -d
+```
+
+### Cleaning up
+
+Stopping all the  containers with removal of all created volumes (be careful!):
+```bash
+COMPOSE_PROFILES="zookeeper,migration,kraft,elastic" docker compose  down -v
+unset COMPOSE_PROFILES
+```
+
+## Useful commands
+Check which brokers are known to Zookeeper:
+```bash
+docker compose exec zookeeper1 zookeeper-shell localhost:21811 ls /brokers/ids
+```
+
+Stopping all the containers without removing any volumes:
+```bash
+COMPOSE_PROFILES="zookeeper,migration,kraft,elastic" docker compose  down
+```
+
+Stopping all the  containers with removal of all created volumes (be careful!):
+```bash
+COMPOSE_PROFILES="zookeeper,migration,kraft,elastic" docker compose  down -v
+```
+
+Cleaning up (CAREFUL: THIS WILL DELETE ALL UNUSED VOLUMES):
+```bash
+docker volumes prune
+```
+
+Reset the `compose.yaml` to the initial state currenty commited to the repository:
+```bash
+git checkout compose.yaml
+```

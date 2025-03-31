@@ -1,9 +1,6 @@
-= Demo for Migrating Confluent Platform from Zookeeper to KRaft
+= Demo for Dynamic KRaft Quorums in Confluent Platform
 
-This playground for experimenting with migrating Kafka from Zookeeper to KRaft.
-It features an optional ELK (Elastic, Kibana, fleet agent) stack for easier observability.
-
-This version of the playground is for Confluent Platform (commercial). The guide for migrating Confluent Platform installations from Zookeeper to KRaft can be found link:https://docs.confluent.io/platform/current/installation/migrate-zk-kraft.html#[here].
+This playground for experimenting with dynamic KRaft quorums.
 
 DISCLAIMER: This project is for demonstration purposes only. Using the demo unmodified in production is highly discouraged. Use at your own risk.
 
@@ -15,7 +12,7 @@ Adapt the testbench to your version of Confluent Platform as required by modifyi
 
 === Initial setup
 
-Start with three KRaft controllers and two brokers. Optionally for large machines or VMs, enable control-center:
+Start with three KRaft controllers and two brokers. Optionally for large machines or VMs, you can enable control-center:
 
 ```shell
 export COMPOSE_PROFILES="controlcenter"
@@ -74,10 +71,16 @@ Let's check the cluster status again:
 docker compose exec broker1 kafka-metadata-quorum --bootstrap-server broker1:9092 describe --status
 ```
 
-We can see controller4 listed as an observer. Check the replication status by running:
+We can see controller4 listed as an observer. Check the replication status by running either (querying a broker):
 
 ```shell
 docker compose exec broker1 kafka-metadata-quorum --bootstrap-server broker1:9092 describe --replication
+```
+
+Alternatively, query a controller (useful for example when the controllers are working but the brokers are not):
+
+```shell
+docker compose exec controller1 kafka-metadata-quorum --bootstrap-controller controller1:9093 describe --replication
 ```
 
 This will show that nodes `101`, `102` and `103` are active members of the quorum. Node `104` is an observer and the two brokers `1` and `2` are also observers.
@@ -96,8 +99,15 @@ Check the list of nodes again:
 docker compose exec broker1 kafka-metadata-quorum --bootstrap-server broker1:9092 describe --replication
 ```
 
-Unfortunately, this will (at least at the time of writing this document) fail with an error message: "Cluster doesn't support adding voter because the kraft.version feature is 0".
-We need to update the KRaft protocol version first. TODO:
+=== No support for updating from static to dynamic quorum
+
+If you have used a different configuration, you might see an error message: "Cluster doesn't support adding voter because the kraft.version feature is 0".
+According to the Kafka documentation, you need to update the KRaft protocol version first.
+However, currently there is no way to update a cluster running with a static quorum to use dynamic quorum.
+
+In this future, this might be possible. Obviously, this part of the demo is not tested.
+If you want to see this behavior, please update the `compose.yml` to use a dynamic quorum instead
+In theory, you could upgrade the version by running this:
 
 ```shell
 docker compose exec controller1 kafka-features --bootstrap-server broker1:9092 upgrade --feature kraft.version=1
