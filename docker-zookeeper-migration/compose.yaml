@@ -304,12 +304,12 @@ services:
       # Use these lines on in Phase 2 (Migration towards a dynamic quorum) and Phase 3: Enable for migration and keep lines in final configuration
       #KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: controller1:9093,controller2:9093,controller3:9093
       #KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      #KAFKA_PROCESS_ROLES: broker
       #CLUSTER_ID: ${KRAFT_CLUSTER_ID}
       ############ Zookeeper to KRaft Migration Phase 3 ##############
       # Phase 3 (Migration finished): Enable these lines in the final configuration
       # Comment "KAFKA_BROKER_ID" (above), uncomment "KAFKA_NODE_ID" (below)
       #KAFKA_NODE_ID: 1
+      #KAFKA_PROCESS_ROLES: broker
       ############ Zookeeper to KRaft Migration END ##############
       # The following variable is NOT an officially used variable in Kafka or the used docker images
       # We use it here in this demo just to format the Kraft controllers properly for dynamic quorum support
@@ -363,12 +363,12 @@ services:
       # Use these lines on in Phase 2 (Migration towards a dynamic quorum) and Phase 3: Enable for migration and keep lines in final configuration
       #KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: controller1:9093,controller2:9093,controller3:9093
       #KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      #KAFKA_PROCESS_ROLES: broker
       #CLUSTER_ID: ${KRAFT_CLUSTER_ID}
       ############ Zookeeper to KRaft Migration Phase 3 ##############
       # Phase 3 (Migration finished): Enable these lines in the final configuration
       # Comment "KAFKA_BROKER_ID" (above), uncomment "KAFKA_NODE_ID" (below)
       #KAFKA_NODE_ID: 2
+      #KAFKA_PROCESS_ROLES: broker
       ############ Zookeeper to KRaft Migration END ##############
       # The following variable is NOT an officially used variable in Kafka or the used docker images
       # We use it here in this demo just to format the Kraft controllers properly for dynamic quorum support
