@@ -106,10 +106,15 @@ services:
       KAFKA_KRAFT_REPLICATION_FACTOR: 3
       KAFKA_CONFLUENT_CLUSTER_LINK_METADATA_TOPIC_ENABLE: true
       KAFKA_CONFLUENT_BALANCER_ENABLE: false
+      # The following three lines are just for purposes of this demo and are NOT official Kafka settings or for the offical container image
       CONTROLLER_1_UUID: ${CONTROLLER_1_UUID}
       CONTROLLER_2_UUID: ${CONTROLLER_2_UUID}
       CONTROLLER_3_UUID: ${CONTROLLER_3_UUID}
-
+      ############ Zookeeper to KRaft Migration Phase 2 ##############
+      # Phase 2 (Migration): Comment the next lines in Phase 3
+      KAFKA_ZOOKEEPER_METADATA_MIGRATION_ENABLE: true
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:21811,zookeeper2:21812,zookeeper3:21813
+      ############ Zookeeper to KRaft Migration END ##############
 
   controller2:
     image: confluentinc/cp-server:${CP_VERSION}
@@ -147,10 +152,15 @@ services:
       KAFKA_KRAFT_REPLICATION_FACTOR: 3
       KAFKA_CONFLUENT_CLUSTER_LINK_METADATA_TOPIC_ENABLE: true
       KAFKA_CONFLUENT_BALANCER_ENABLE: false
+      # The following three lines are just for purposes of this demo and are NOT official Kafka settings or for the offical container image
       CONTROLLER_1_UUID: ${CONTROLLER_1_UUID}
       CONTROLLER_2_UUID: ${CONTROLLER_2_UUID}
       CONTROLLER_3_UUID: ${CONTROLLER_3_UUID}
-
+      ############ Zookeeper to KRaft Migration Phase 2 ##############
+      # Phase 2 (Migration): Comment the next lines in Phase 3
+      KAFKA_ZOOKEEPER_METADATA_MIGRATION_ENABLE: true
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:21811,zookeeper2:21812,zookeeper3:21813
+      ############ Zookeeper to KRaft Migration END ##############
 
   controller3:
     image: confluentinc/cp-server:${CP_VERSION}
@@ -188,9 +198,15 @@ services:
       KAFKA_KRAFT_REPLICATION_FACTOR: 3
       KAFKA_CONFLUENT_CLUSTER_LINK_METADATA_TOPIC_ENABLE: true
       KAFKA_CONFLUENT_BALANCER_ENABLE: false
+      # The following three lines are just for purposes of this demo and are NOT official Kafka settings or for the offical container image
       CONTROLLER_1_UUID: ${CONTROLLER_1_UUID}
       CONTROLLER_2_UUID: ${CONTROLLER_2_UUID}
       CONTROLLER_3_UUID: ${CONTROLLER_3_UUID}
+      ############ Zookeeper to KRaft Migration Phase 2 ##############
+      # Phase 2 (Migration): Comment the next lines in Phase 3
+      KAFKA_ZOOKEEPER_METADATA_MIGRATION_ENABLE: true
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:21811,zookeeper2:21812,zookeeper3:21813
+      ############ Zookeeper to KRaft Migration END ##############
 
   controller4:
     image: confluentinc/cp-server:${CP_VERSION}
@@ -228,6 +244,7 @@ services:
       KAFKA_KRAFT_REPLICATION_FACTOR: 3
       KAFKA_CONFLUENT_CLUSTER_LINK_METADATA_TOPIC_ENABLE: true
       KAFKA_CONFLUENT_BALANCER_ENABLE: false
+      # The following three lines are just for purposes of this demo and are NOT official Kafka settings or for the offical container image
       CONTROLLER_1_UUID: ${CONTROLLER_1_UUID}
       CONTROLLER_2_UUID: ${CONTROLLER_2_UUID}
       CONTROLLER_3_UUID: ${CONTROLLER_3_UUID}
@@ -280,13 +297,11 @@ services:
       #KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: controller1:9093,controller2:9093,controller3:9093
       #KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       #KAFKA_PROCESS_ROLES: broker
+      #CLUSTER_ID: ${KRAFT_CLUSTER_ID}
       ############ Zookeeper to KRaft Migration Phase 3 ##############
       # Phase 3 (Migration finished): Enable these lines in the final configuration
       # Comment "KAFKA_BROKER_ID" (above), uncomment "KAFKA_NODE_ID" (below)
       #KAFKA_NODE_ID: 1
-      #CLUSTER_ID: ${KRAFT_CLUSTER_ID}
-      # Use these settings for dynamic quorum
-      KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: controller1:9093,controller2:9093,controller3:9093
       ############ Zookeeper to KRaft Migration END ##############
       # The following variable is NOT an officially used variable in Kafka or the used docker images
       # We use it here in this demo just to format the Kraft controllers properly for dynamic quorum support
@@ -341,13 +356,11 @@ services:
       #KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: controller1:9093,controller2:9093,controller3:9093
       #KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       #KAFKA_PROCESS_ROLES: broker
+      #CLUSTER_ID: ${KRAFT_CLUSTER_ID}
       ############ Zookeeper to KRaft Migration Phase 3 ##############
       # Phase 3 (Migration finished): Enable these lines in the final configuration
       # Comment "KAFKA_BROKER_ID" (above), uncomment "KAFKA_NODE_ID" (below)
       #KAFKA_NODE_ID: 2
-      #CLUSTER_ID: ${KRAFT_CLUSTER_ID}
-      # Use these settings for dynamic quorum
-      KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: controller1:9093,controller2:9093,controller3:9093
       ############ Zookeeper to KRaft Migration END ##############
       # The following variable is NOT an officially used variable in Kafka or the used docker images
       # We use it here in this demo just to format the Kraft controllers properly for dynamic quorum support
