@@ -103,7 +103,7 @@ The migration should now start. Check the KRaft controller logs for details. Wai
 docker compose logs controller1 controller2 controller3|grep "Completed migration"
 ```
 
-### Phase 3: KRaft-only mode
+=== Phase 3: KRaft-only mode
 
 Reconfigure the brokers and the controllers and remove all lines only relevant during Phase 1 and Phase 2 (please read the `compose.yaml` carefully as some configuration options need to remain enabled in KRaft-only mode).
 
@@ -129,7 +129,7 @@ export COMPOSE_PROFILES="kraft"
 docker compose up -d
 ```
 
-### Adding another controller dynamically
+=== Adding another controller dynamically
 
 You might have noticed a fourth controller with hostname `controller4`. This controller is not configured to be part of the boostrap servers.
 It will join the quorum as an observer.
@@ -146,7 +146,7 @@ Check the status again:
 docker compose exec controller1 kafka-metadata-quorum --bootstrap-controller controller1:9093 describe --replication
 ```
 
-### Cleaning up
+== Cleaning up
 
 Stopping all the  containers with removal of all created volumes (be careful!):
 ```bash
@@ -154,7 +154,7 @@ COMPOSE_PROFILES="zookeeper,migration,kraft" docker compose  down -v
 unset COMPOSE_PROFILES
 ```
 
-## Useful commands
+== Useful commands
 Check which brokers are known to Zookeeper:
 ```bash
 docker compose exec zookeeper1 zookeeper-shell localhost:21811 ls /brokers/ids
