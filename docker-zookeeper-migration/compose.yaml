@@ -262,6 +262,7 @@ services:
     hostname: broker1
     container_name: broker1
     ports:
+      - "9092:19092"
       - "19092:19092"
     volumes:
       - data-broker1:/var/lib/kafka/data

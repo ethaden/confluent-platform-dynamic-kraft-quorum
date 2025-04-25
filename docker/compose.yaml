@@ -156,6 +156,7 @@ services:
     container_name: broker1
     ports:
       - "9092:19092"
+      - "19092:19092"
     volumes:
       - data-broker1:/var/lib/kafka/data
       - ./kraft/controller/ensure:/etc/confluent/docker/ensure
@@ -209,7 +210,7 @@ services:
     hostname: broker2
     container_name: broker2
     ports:
-      - "9092:29092"
+      - "29092:29092"
     volumes:
       - data-broker2:/var/lib/kafka/data
       - ./kraft/controller/ensure:/etc/confluent/docker/ensure
